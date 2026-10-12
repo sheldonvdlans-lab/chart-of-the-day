@@ -1,4 +1,4 @@
-import type { Guess, Interval, Secret } from './types.ts';
+import type { Guess, Interval, Save, Secret } from './types.ts';
 
 export const INTERVAL_MS: Record<Interval, number> = { '1h': 3600e3, '4h': 4 * 3600e3, '1d': 24 * 3600e3 };
 
@@ -32,6 +32,34 @@ export function grade(guess: Guess, move: number): Grade {
 }
 
 export const emoji = (g: Grade) => (g.dir ? '🟩' : '🟥') + (!g.dir || g.off > 1 ? '⬛' : g.off ? '🟨' : '🟩');
+
+const dayBefore = (date: string) => new Date(Date.parse(date) - 864e5).toISOString().slice(0, 10);
+
+/** The streak as it stands on `date`: it is gone once a full day was skipped. */
+export const liveStreak = (save: Save, date: string) =>
+  save.lastDone === date || save.lastDone === dayBefore(date) ? save.streak : 0;
+
+/** Books a finished day into the lifetime stats. Call once per day. */
+export function recordDay(save: Save, date: string, grades: Grade[]) {
+  save.streak = liveStreak(save, date) + 1;
+  save.best = Math.max(save.best, save.streak);
+  save.lastDone = date;
+  save.played++;
+  for (const g of grades) {
+    save.points += g.points;
+    if (g.dir) save.dirHits++;
+  }
+}
+
+export function shareText(title: string, n: number, intervals: Interval[], grades: Grade[], streak: number, url: string) {
+  const total = grades.reduce((sum, g) => sum + g.points, 0);
+  return [
+    `${title} #${n} — ${total}/${grades.length * 100}`,
+    ...grades.map((g, r) => `${intervals[r].toUpperCase()} ${emoji(g)}`),
+    `🔥 ${streak}`,
+    url,
+  ].join('\n');
+}
 
 // Obfuscation only, so opening a puzzle file doesn't spoil it. Not security.
 const xor = (s: string, key: string) =>

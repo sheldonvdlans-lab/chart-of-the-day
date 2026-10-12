@@ -1,15 +1,16 @@
 import './style.css';
 import { showChart } from './chart.ts';
-import { BAND_EDGES, INTERVAL_MS, bandLabel, emoji, grade, pct, today, unseal } from './game.ts';
+import { BAND_EDGES, INTERVAL_MS, bandLabel, emoji, grade, liveStreak, pct, recordDay, shareText, today, unseal } from './game.ts';
+import { load, store } from './storage.ts';
 import { t } from './strings.ts';
-import type { DailyPuzzle, Guess } from './types.ts';
+import type { DailyPuzzle } from './types.ts';
 
 const $ = (id: string) => document.getElementById(id)!;
 const radio = (name: string, value: string | number, label: string) =>
   `<label><input type="radio" name="${name}" value="${value}" required><span>${label}</span></label>`;
 
 let puzzle: DailyPuzzle;
-const guesses: Guess[] = [];
+const save = load();
 
 /** Everything about round `r` that is only shown after the guess is locked in. */
 function revealed(r: number) {
@@ -25,7 +26,7 @@ function revealed(r: number) {
   return {
     future,
     move,
-    grade: guesses[r] && grade(guesses[r], move),
+    grade: save.guesses[r] && grade(save.guesses[r], move),
     label: `${symbol.replace('USDT', '/USDT')} · ${when}${interval === '1d' ? '' : ' UTC'}`,
   };
 }
@@ -44,7 +45,9 @@ function play(r: number) {
   $('panel').querySelector('form')!.onsubmit = async (event) => {
     event.preventDefault();
     const form = new FormData(event.target as HTMLFormElement);
-    const guess = (guesses[r] = { up: form.get('up') === '1', band: Number(form.get('band')) });
+    const guess = (save.guesses[r] = { up: form.get('up') === '1', band: Number(form.get('band')) });
+    if (last) recordDay(save, puzzle.date, puzzle.rounds.map((_, i) => revealed(i).grade));
+    store(save);
     $('panel').innerHTML = `<p class="muted">${t.yourCall(guess.up ? t.up : t.down, bandLabel(guess.band))}</p>`;
     const { future, move, grade, label } = revealed(r);
     await reveal(future);
@@ -59,6 +62,7 @@ function results(view = puzzle.rounds.length - 1) {
   const rounds = puzzle.rounds.map((_, r) => revealed(r));
   const total = rounds.reduce((sum, round) => sum + round.grade.points, 0);
   $('round').textContent = t.results(puzzle.n);
+  const untilNext = 864e5 - (Date.now() % 864e5); // puzzles switch at UTC midnight
   const { candles } = puzzle.rounds[view];
   showChart($('chart'), [...candles, ...rounds[view].future], candles.length + rounds[view].future.length);
   $('panel').innerHTML = `<p class="score">${total}<small>/${rounds.length * 100}</small></p>
@@ -69,10 +73,41 @@ function results(view = puzzle.rounds.length - 1) {
           <span class="muted">${label} · ${pct(move)}</span>
         </button>`,
       )
-      .join('')}`;
+      .join('')}
+    <button id="share">${t.share}</button>
+    <dl>${[
+      [t.stats.streak, `🔥 ${liveStreak(save, puzzle.date)}`],
+      [t.stats.best, save.best],
+      [t.stats.played, save.played],
+      [t.stats.average, Math.round(save.points / save.played)],
+      [t.stats.direction, `${Math.round((100 * save.dirHits) / (save.played * rounds.length))}%`],
+    ]
+      .map(([name, value]) => `<div><dd>${value}</dd><dt>${name}</dt></div>`)
+      .join('')}</dl>
+    <p class="muted">${t.nextIn(Math.floor(untilNext / 3600e3), Math.floor((untilNext % 3600e3) / 60e3))}</p>`;
   $('panel')
     .querySelectorAll<HTMLElement>('.round')
     .forEach((button, r) => (button.onclick = () => results(r)));
+  $('share').onclick = async () => {
+    const text = shareText(
+      t.title,
+      puzzle.n,
+      puzzle.rounds.map((round) => round.interval),
+      rounds.map((round) => round.grade),
+      liveStreak(save, puzzle.date),
+      location.origin + location.pathname,
+    );
+    try {
+      if (navigator.share) return await navigator.share({ text });
+    } catch (error) {
+      if ((error as Error).name === 'AbortError') return; // share sheet dismissed
+    }
+    // No share sheet (desktop, webview): copy instead.
+    await navigator.clipboard.writeText(text).then(
+      () => ($('share').textContent = t.copied),
+      () => {},
+    );
+  };
 }
 
 async function start() {
@@ -80,7 +115,9 @@ async function start() {
   const res = await fetch(`puzzles/${today()}.json`).catch(() => null);
   if (!res?.ok) return void ($('panel').textContent = t.noPuzzle);
   puzzle = await res.json();
-  play(0);
+  if (save.date !== puzzle.date) Object.assign(save, { date: puzzle.date, guesses: [] });
+  if (save.guesses.length < puzzle.rounds.length) play(save.guesses.length);
+  else results();
 }
 
 start();

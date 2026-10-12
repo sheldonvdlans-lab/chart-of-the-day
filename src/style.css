@@ -162,6 +162,25 @@ button.round[aria-pressed='true'] {
   border-color: var(--accent);
 }
 
+dl {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  margin: 0;
+  text-align: center;
+}
+
+dd {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+dt {
+  color: var(--muted);
+  font-size: 0.6875rem;
+}
+
 footer {
   margin-top: auto;
   padding: 12px 0;

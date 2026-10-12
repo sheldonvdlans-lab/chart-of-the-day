@@ -15,6 +15,10 @@ const en = {
   next: 'Next chart',
   seeResults: 'See results',
   results: (n: number) => `#${n} · Results`,
+  share: 'Share',
+  copied: 'Copied to clipboard',
+  nextIn: (hours: number, minutes: number) => `Next chart in ${hours}h ${minutes}m`,
+  stats: { played: 'Played', average: 'Avg score', direction: 'Direction right', streak: 'Streak', best: 'Best streak' },
   noPuzzle: 'No chart today. Check back tomorrow.',
 };
 
