@@ -110,6 +110,24 @@ function results(view = puzzle.rounds.length - 1) {
   };
 }
 
+// The service worker caches whatever passes through it, but it wasn't there for this first
+// page load. Once it is in control, re-request the app shell and the coming week of puzzles.
+async function enableOffline() {
+  // Dev server has no built files to cache; a Capacitor app ships its files in the bundle.
+  if (!import.meta.env.PROD || !('serviceWorker' in navigator) || 'Capacitor' in window) return;
+  await navigator.serviceWorker.register('sw.js');
+  if (!navigator.serviceWorker.controller) {
+    await new Promise((done) => navigator.serviceWorker.addEventListener('controllerchange', done, { once: true }));
+  }
+  // Loaded files, plus what the <head> links to (manifest and icons are only fetched on demand).
+  const shell = [
+    ...performance.getEntriesByType('resource').map((entry) => entry.name),
+    ...Array.from(document.querySelectorAll<HTMLLinkElement>('link[href]'), (link) => link.href),
+  ].filter((url) => url.startsWith(location.origin));
+  const week = Array.from({ length: 8 }, (_, i) => `puzzles/${today(i)}.json`);
+  for (const url of ['./', ...shell, ...week]) fetch(url).catch(() => {});
+}
+
 async function start() {
   $('title').textContent = t.title;
   const res = await fetch(`puzzles/${today()}.json`).catch(() => null);
@@ -120,4 +138,4 @@ async function start() {
   else results();
 }
 
-start();
+start().then(enableOffline);

@@ -15,8 +15,8 @@ export const bandLabel = (band: number) =>
 
 export const pct = (value: number, digits = 2) => `${value > 0 ? '+' : ''}${value.toFixed(digits)}%`;
 
-/** Today's puzzle date: everyone switches at UTC midnight. */
-export const today = () => new Date().toISOString().slice(0, 10);
+/** Today's puzzle date (or `daysAhead` later): everyone switches at UTC midnight. */
+export const today = (daysAhead = 0) => new Date(Date.now() + daysAhead * 864e5).toISOString().slice(0, 10);
 
 export interface Grade {
   dir: boolean; // direction right
