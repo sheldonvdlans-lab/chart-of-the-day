@@ -12,6 +12,7 @@ const en = {
   yourCall: (direction: string, band: string) => `Your call: ${direction} ${band}`,
   closed: (move: string) => `Closed ${move}`,
   points: (n: number) => `${n} pts`,
+  youActual: (you: string, actual: string, move: string) => `You: ${you} · Actual: ${actual} (${move})`,
   next: 'Next chart',
   seeResults: 'See results',
   results: (n: number) => `#${n} · Results`,

@@ -54,8 +54,20 @@ footer {
 }
 
 #chart {
+  position: relative;
   height: 42dvh;
   min-height: 220px;
+}
+
+/* Marks the slots of the 10 candles to guess; positioned by chart.ts. */
+.future {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: rgb(240 185 11 / 0.07);
+  border-left: 1px dashed var(--accent);
 }
 
 #panel,
@@ -156,6 +168,10 @@ button.round {
   color: var(--text);
   font-weight: 400;
   text-align: left;
+}
+
+button.round span {
+  font-size: 0.875rem;
 }
 
 button.round[aria-pressed='true'] {

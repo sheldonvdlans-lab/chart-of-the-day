@@ -1,6 +1,6 @@
 import './style.css';
 import { showChart } from './chart.ts';
-import { BAND_EDGES, INTERVAL_MS, bandLabel, emoji, grade, liveStreak, pct, recordDay, shareText, today, unseal } from './game.ts';
+import { BAND_EDGES, INTERVAL_MS, bandLabel, bandOf, emoji, grade, liveStreak, pct, recordDay, shareText, today, unseal } from './game.ts';
 import { load, store } from './storage.ts';
 import { t } from './strings.ts';
 import type { DailyPuzzle } from './types.ts';
@@ -8,6 +8,8 @@ import type { DailyPuzzle } from './types.ts';
 const $ = (id: string) => document.getElementById(id)!;
 const radio = (name: string, value: string | number, label: string) =>
   `<label><input type="radio" name="${name}" value="${value}" required><span>${label}</span></label>`;
+
+const call = (up: boolean, band: number) => `${up ? '▲' : '▼'} ${bandLabel(band)}`;
 
 let puzzle: DailyPuzzle;
 const save = load();
@@ -35,7 +37,7 @@ function play(r: number) {
   const round = puzzle.rounds[r];
   const last = r === puzzle.rounds.length - 1;
   $('round').textContent = t.round(r + 1, puzzle.rounds.length, round.interval.toUpperCase());
-  const reveal = showChart($('chart'), round.candles, round.candles.length + revealed(r).future.length);
+  const reveal = showChart($('chart'), round.candles, revealed(r).future);
   $('panel').innerHTML = `<form>
     <p>${t.question}</p>
     <fieldset><legend>${t.direction}</legend>${radio('up', 1, t.up)}${radio('up', 0, t.down)}</fieldset>
@@ -49,8 +51,8 @@ function play(r: number) {
     if (last) recordDay(save, puzzle.date, puzzle.rounds.map((_, i) => revealed(i).grade));
     store(save);
     $('panel').innerHTML = `<p class="muted">${t.yourCall(guess.up ? t.up : t.down, bandLabel(guess.band))}</p>`;
-    const { future, move, grade, label } = revealed(r);
-    await reveal(future);
+    const { move, grade, label } = revealed(r);
+    await reveal();
     $('panel').innerHTML += `<p class="result">${emoji(grade)} ${t.closed(pct(move))} · ${t.points(grade.points)}</p>
       <p class="muted">${label}</p>
       <button>${last ? t.seeResults : t.next}</button>`;
@@ -63,14 +65,14 @@ function results(view = puzzle.rounds.length - 1) {
   const total = rounds.reduce((sum, round) => sum + round.grade.points, 0);
   $('round').textContent = t.results(puzzle.n);
   const untilNext = 864e5 - (Date.now() % 864e5); // puzzles switch at UTC midnight
-  const { candles } = puzzle.rounds[view];
-  showChart($('chart'), [...candles, ...rounds[view].future], candles.length + rounds[view].future.length);
+  showChart($('chart'), puzzle.rounds[view].candles, rounds[view].future, true);
   $('panel').innerHTML = `<p class="score">${total}<small>/${rounds.length * 100}</small></p>
     ${rounds
       .map(
         ({ grade, move, label }, r) => `<button class="round" aria-pressed="${r === view}">
           <b>${puzzle.rounds[r].interval.toUpperCase()} ${emoji(grade)} ${t.points(grade.points)}</b>
-          <span class="muted">${label} · ${pct(move)}</span>
+          <span>${t.youActual(call(save.guesses[r].up, save.guesses[r].band), call(move > 0, bandOf(move)), pct(move))}</span>
+          <span class="muted">${label}</span>
         </button>`,
       )
       .join('')}
