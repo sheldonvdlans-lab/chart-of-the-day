@@ -67,8 +67,12 @@ file doesn't spoil it. That is not security: without a backend the answer is alw
 
 1. Set `LAUNCH_DATE` in `src/config.ts` to the day puzzle #1 should appear.
 2. `npm run generate` and commit `public/puzzles/`.
-3. `npm run build` and host `dist/` anywhere static (GitHub Pages, Vercel). Paths are relative,
-   so a sub-path works.
+3. Push to `main`. `.github/workflows/deploy.yml` tests, builds and publishes `dist/` to GitHub
+   Pages. One-time setup: in the repository's Settings → Pages, set Source to "GitHub Actions".
+   On a free GitHub plan the repository has to be public for Pages.
+
+Any other static host works too: `npm run build` and upload `dist/`. Paths are relative, so a
+sub-path is fine.
 
 There are 365 days of puzzles. Before they run out, raise `DAYS` (or move `DATA_END` forward for
 fresh data) and regenerate; days that were already played keep their puzzle only if the seed,
