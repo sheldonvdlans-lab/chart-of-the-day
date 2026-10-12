@@ -6,9 +6,10 @@ import type { Candle } from './types.ts';
 const UP = '#26a69a';
 const DOWN = '#ef5350';
 const MUTED = '#8b949e';
-// The price axis always reaches at least this far (in %) above and below the anchor,
-// so every band fits on both sides and the chart's framing never hints at a direction.
-const MIN_REACH = 12;
+// The price axis is symmetric around the anchor so the framing never hints at a direction:
+// it reaches as far as the candles stray from 0%, plus some headroom, and never less than MIN_REACH %.
+const HEADROOM = 1.15;
+const MIN_REACH = 3;
 
 let chart: IChartApi | undefined;
 let observer: ResizeObserver | undefined;
@@ -45,7 +46,7 @@ export function showChart(el: HTMLElement, candles: Candle[], future: Candle[], 
     priceLineVisible: false, // replaced by `close` below, which is coloured by outcome instead of by candle
     lastValueVisible: false,
     autoscaleInfoProvider: () => {
-      const reach = Math.max(MIN_REACH, ...shown.flatMap((c) => [c[1], -c[2]]));
+      const reach = Math.max(MIN_REACH, HEADROOM * Math.max(...shown.flatMap((c) => [c[1], -c[2]])));
       return { priceRange: { minValue: -reach, maxValue: reach } };
     },
   });
