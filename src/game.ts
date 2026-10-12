@@ -1,4 +1,6 @@
-import type { Guess, Secret } from './types.ts';
+import type { Guess, Interval, Secret } from './types.ts';
+
+export const INTERVAL_MS: Record<Interval, number> = { '1h': 3600e3, '4h': 4 * 3600e3, '1d': 24 * 3600e3 };
 
 /** Upper edges (in %) of the move bands; the last band is open-ended. */
 export const BAND_EDGES = [2, 5, 10];

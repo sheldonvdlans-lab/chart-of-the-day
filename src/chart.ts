@@ -30,11 +30,24 @@ export function showChart(el: HTMLElement, candles: Candle[], slots: number) {
 
   // Fake, evenly spaced times: the real ones stay sealed and the time axis is hidden anyway.
   const time = (i: number) => (i * 86400) as UTCTimestamp;
-  series.setData(
-    Array.from({ length: slots }, (_, i) => {
-      const c = candles[i];
-      return c ? { time: time(i), open: c[0], high: c[1], low: c[2], close: c[3] } : { time: time(i) };
-    }),
-  );
-  chart.timeScale().fitContent();
+  const draw = (shown: Candle[]) => {
+    series.setData(
+      Array.from({ length: slots }, (_, i) => {
+        const c = shown[i];
+        return c ? { time: time(i), open: c[0], high: c[1], low: c[2], close: c[3] } : { time: time(i) };
+      }),
+    );
+    // Pin the view to all slots; by default the chart ends at the last real candle.
+    chart!.timeScale().setVisibleLogicalRange({ from: -0.5, to: slots - 0.5 });
+  };
+  draw(candles);
+
+  /** Plays the future candles into the empty slots, one at a time. */
+  return async (future: Candle[]) => {
+    const instant = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    for (let n = instant ? future.length : 1; n <= future.length; n++) {
+      draw([...candles, ...future.slice(0, n)]);
+      if (n < future.length) await new Promise((done) => setTimeout(done, 250));
+    }
+  };
 }

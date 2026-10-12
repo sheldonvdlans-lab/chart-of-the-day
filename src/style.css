@@ -47,6 +47,7 @@ p {
 }
 
 #round,
+.muted,
 footer {
   color: var(--muted);
   font-size: 0.875rem;
@@ -132,6 +133,33 @@ form:invalid button {
 .result {
   font-size: 1.125rem;
   font-weight: 600;
+}
+
+.score {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.score small {
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+/* A finished round in the results list; tap to see its chart again. */
+button.round {
+  justify-items: start;
+  gap: 2px;
+  padding: 8px 12px;
+  background: var(--panel);
+  border-color: var(--line);
+  color: var(--text);
+  font-weight: 400;
+  text-align: left;
+}
+
+button.round[aria-pressed='true'] {
+  border-color: var(--accent);
 }
 
 footer {

@@ -5,7 +5,7 @@
 //   node scripts/generate-puzzles.ts --report   report only, write nothing
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { LAUNCH_DATE } from '../src/config.ts';
-import { BAND_EDGES, bandLabel, bandOf, seal } from '../src/game.ts';
+import { BAND_EDGES, INTERVAL_MS, bandLabel, bandOf, seal } from '../src/game.ts';
 import type { Candle, DailyPuzzle, Interval } from '../src/types.ts';
 
 const SEED = 20261012;
@@ -15,7 +15,6 @@ const SYMBOLS = [
   'BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'DOGE', 'LINK', 'AVAX', 'LTC',
   'TRX', 'DOT', 'ATOM', 'ETC', 'XLM', 'BCH', 'UNI', 'NEAR', 'AAVE', 'FIL',
 ].map((s) => `${s}USDT`);
-const INTERVALS: Record<Interval, number> = { '1h': 3600e3, '4h': 4 * 3600e3, '1d': 24 * 3600e3 };
 
 const VISIBLE = 60;
 const SIZE = VISIBLE + 10;
@@ -116,7 +115,7 @@ const series = Object.fromEntries(
     SYMBOLS.map(async (symbol) => {
       mkdirSync(RAW_DIR, { recursive: true });
       const byInterval = {} as Record<Interval, Kline[]>;
-      for (const interval of Object.keys(INTERVALS) as Interval[]) byInterval[interval] = await klines(symbol, interval);
+      for (const interval of Object.keys(INTERVAL_MS) as Interval[]) byInterval[interval] = await klines(symbol, interval);
       return [symbol, byInterval] as const;
     }),
   ),
@@ -125,13 +124,13 @@ const series = Object.fromEntries(
 const btcFamous = Object.values(Object.groupBy(series.BTCUSDT['1d'], (c) => new Date(c[0]).getUTCFullYear())).flatMap((year) =>
   biggestDays(year!, FAMOUS_BTC_PER_YEAR),
 );
-const intervals = Object.keys(INTERVALS) as Interval[];
+const intervals = Object.keys(INTERVAL_MS) as Interval[];
 const need = cellNeeds();
 const chosen: Win[] = []; // DAYS windows per interval, in `intervals` order
 let short = false;
 
 for (const [n, interval] of intervals.entries()) {
-  const step = INTERVALS[interval];
+  const step = INTERVAL_MS[interval];
   const drop = { gap: 0, famous: 0, tiny: 0, flat: 0 };
   let wins: Win[] = [];
   let grid = 0;
