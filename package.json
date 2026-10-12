@@ -1,0 +1,9 @@
+{
+  "name": "chart-of-the-day",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "node scripts/generate-puzzles.ts",
+    "test": "node --test src/*.test.ts"
+  }
+}
