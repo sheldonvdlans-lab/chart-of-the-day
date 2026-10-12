@@ -53,7 +53,8 @@ valid schedule exists.
 What it guarantees, all tunable at the top of `scripts/generate-puzzles.ts`:
 
 - Each timeframe gets 30/30/25/15% of its puzzles in the four bands, half up and half down.
-- No flat charts, no outcome under 0.5%, no gaps in the data, nothing from a pair's first 70 candles.
+- No flat charts, no outcome under 0.5%, no gaps in the data, nothing from a pair's first 70 candles,
+  and no chart whose visible candles stray more than 100% from the anchor (unreadable on the axis).
 - 1D: no window with a famous day (BTC's three biggest days of each year, the pair's own five
   biggest) in the hidden candles or the ten before them.
 - Scheduling: the three rounds of a day never overlap in calendar time; puzzles whose hidden

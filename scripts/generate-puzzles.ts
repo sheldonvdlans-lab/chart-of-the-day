@@ -24,6 +24,8 @@ const SIZE = VISIBLE + 10;
 const STRIDE: Record<Interval, number> = { '1h': 70, '4h': 70, '1d': 30 };
 const BAND_WEIGHTS = [0.3, 0.3, 0.25, 0.15]; // share of puzzles per band, same order as BAND_EDGES
 const MIN_MOVE = 0.5; // % — below this the direction is a coin flip
+// % — visible candles straying further from the anchor squash the recent candles and the outcome flat.
+const MAX_REACH = 100;
 // Share of flattest charts to drop. Lower on 1D: 60 daily candles are rarely dead,
 // and flat charts are where the scarce 0–2% outcomes come from.
 const FLAT_QUANTILE: Record<Interval, number> = { '1h': 0.25, '4h': 0.25, '1d': 0.1 };
@@ -131,7 +133,7 @@ let short = false;
 
 for (const [n, interval] of intervals.entries()) {
   const step = INTERVAL_MS[interval];
-  const drop = { gap: 0, famous: 0, tiny: 0, flat: 0 };
+  const drop = { gap: 0, famous: 0, tiny: 0, wild: 0, flat: 0 };
   let wins: Win[] = [];
   let grid = 0;
 
@@ -147,8 +149,11 @@ for (const [n, interval] of intervals.entries()) {
         const anchor = w[VISIBLE - 1][4];
         const move = pct(w[SIZE - 1][4], anchor);
         const vis = w.slice(0, VISIBLE);
-        const range = (Math.max(...vis.map((c) => c[2])) - Math.min(...vis.map((c) => c[3]))) / anchor;
+        const high = Math.max(...vis.map((c) => c[2]));
+        const low = Math.min(...vis.map((c) => c[3]));
+        const range = (high - low) / anchor;
         if (Math.abs(move) < MIN_MOVE) drop.tiny++;
+        else if (Math.max(pct(high, anchor), -pct(low, anchor)) > MAX_REACH) drop.wild++;
         else wins.push({ symbol, k, i, move, range, from: w[0][0], hiddenFrom: w[VISIBLE][0], to: w[SIZE - 1][0] + step });
       }
     }
@@ -164,7 +169,7 @@ for (const [n, interval] of intervals.entries()) {
 
   console.log(
     `\n${interval}: stride ${STRIDE[interval]} → ${grid} windows; dropped ${drop.gap} gap, ${drop.famous} famous day, ` +
-      `${drop.tiny} move < ${MIN_MOVE}%, ${drop.flat} flat (range < ${(flatBelow * 100).toFixed(1)}%) → ${wins.length} usable, ${DAYS} needed`,
+      `${drop.tiny} move < ${MIN_MOVE}%, ${drop.wild} reach > ${MAX_REACH}%, ${drop.flat} flat (range < ${(flatBelow * 100).toFixed(1)}%) → ${wins.length} usable, ${DAYS} needed`,
   );
   console.table(
     BAND_WEIGHTS.map((_, b) => {
