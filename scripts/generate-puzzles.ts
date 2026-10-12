@@ -5,7 +5,7 @@
 //   node scripts/generate-puzzles.ts --report   report only, write nothing
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { LAUNCH_DATE } from '../src/config.ts';
-import { BAND_EDGES, bandOf, seal } from '../src/game.ts';
+import { BAND_EDGES, bandLabel, bandOf, seal } from '../src/game.ts';
 import type { Candle, DailyPuzzle, Interval } from '../src/types.ts';
 
 const SEED = 20261012;
@@ -169,9 +169,8 @@ for (const [n, interval] of intervals.entries()) {
   );
   console.table(
     BAND_WEIGHTS.map((_, b) => {
-      const label = b < BAND_EDGES.length ? `${b ? BAND_EDGES[b - 1] : 0}–${BAND_EDGES[b]}%` : `>${BAND_EDGES[b - 1]}%`;
       const cell = (c: number) => `${pools[c].length} / ${need[c]}${pools[c].length < need[c] ? '  ✗ SHORT' : ''}`;
-      return { band: label, 'up (have / need)': cell(b * 2), 'down (have / need)': cell(b * 2 + 1) };
+      return { band: bandLabel(b), 'up (have / need)': cell(b * 2), 'down (have / need)': cell(b * 2 + 1) };
     }),
   );
   if (pools.some((pool, cell) => pool.length < need[cell])) {

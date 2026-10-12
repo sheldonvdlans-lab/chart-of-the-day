@@ -3,7 +3,17 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
     "generate": "node scripts/generate-puzzles.ts",
     "test": "node --test src/*.test.ts"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  },
+  "dependencies": {
+    "lightweight-charts": "^5.2.1"
   }
 }

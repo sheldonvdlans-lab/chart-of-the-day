@@ -20,3 +20,8 @@ export interface DailyPuzzle {
   n: number; // puzzle number, 1 = LAUNCH_DATE
   rounds: Round[];
 }
+
+export interface Guess {
+  up: boolean;
+  band: number; // index into the bands, see BAND_EDGES
+}
